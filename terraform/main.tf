@@ -1,6 +1,6 @@
 provider "google" {
-  project = "your-project-id" # 実際のプロジェクトID
-  region  = "us-central1"               # 無料枠対象リージョン
+  project = "var.project_id" # 実際のプロジェクトID
+  region  = "var.region"               # 無料枠対象リージョン
 }
 
 # VPC
@@ -13,7 +13,7 @@ resource "google_compute_network" "vpc" {
 resource "google_compute_subnetwork" "subnet" {
   name          = "free-subnet"
   ip_cidr_range = "10.0.1.0/24"
-  region        = "us-central1"
+  region        = var.region
   network       = google_compute_network.vpc.id
 }
 
@@ -33,7 +33,7 @@ resource "google_compute_firewall" "http" {
 resource "google_compute_instance" "app_server" {
   name         = "free-app-vm"
   machine_type = "e2-micro"
-  zone         = "us-central1-a"
+  zone         = var.zone
   tags         = ["http-server"]
 
   boot_disk {
@@ -50,7 +50,7 @@ resource "google_compute_instance" "app_server" {
 spec:
   containers:
     - name: my-app
-      image: 'docker.io/your-docker-id/your-image-name'
+      image: '${var.docker_image}' # GitHub Actionsから渡される最新イメージ
       ports:
         - containerPort: 80
           hostPort: 80
