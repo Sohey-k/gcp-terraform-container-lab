@@ -1,6 +1,6 @@
 provider "google" {
-  project = "var.project_id" # 実際のプロジェクトID
-  region  = "var.region"               # 無料枠対象リージョン
+  project = var.project_id # 実際のプロジェクトID
+  region  = var.region               # 無料枠対象リージョン
 }
 
 # VPC
