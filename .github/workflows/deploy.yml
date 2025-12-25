@@ -1,0 +1,47 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main  # mainブランチにプッシュされた時に発動
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. GitHubのコードをチェックアウト
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Docker Hubへログイン
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      # 3. DockerイメージをビルドしてPush
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_HUB_USERNAME }}/gcp-free-app:latest .
+          docker push ${{ secrets.DOCKER_HUB_USERNAME }}/gcp-free-app:latest
+
+      # 4. Terraformのセットアップ
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      # 5. GCPの認証
+      - name: Google Cloud Auth
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      # 6. Terraformの実行
+      - name: Terraform Apply
+        run: |
+          cd terraform
+          terraform init
+          terraform apply -auto-approve \
+            -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
+            -var="docker_image=docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/gcp-free-app:latest"

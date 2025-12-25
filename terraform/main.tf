@@ -1,5 +1,5 @@
 provider "google" {
-  project = "reepoo0528-my-new-project" # 実際のプロジェクトID
+  project = "your-project-id" # 実際のプロジェクトID
   region  = "us-central1"               # 無料枠対象リージョン
 }
 
@@ -50,7 +50,7 @@ resource "google_compute_instance" "app_server" {
 spec:
   containers:
     - name: my-app
-      image: 'docker.io/reepoo0528/gcp-free-app:v1'
+      image: 'docker.io/your-docker-id/your-image-name'
       ports:
         - containerPort: 80
           hostPort: 80
