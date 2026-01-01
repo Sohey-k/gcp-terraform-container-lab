@@ -2,11 +2,55 @@
 .terraform/
 *.tfstate
 *.tfstate.backup
-.terraform.lock.hcl
+*.tfvars
+!terraform.tfvars.example
+terraform.rc
+.terraformrc
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# GCP 認証情報（最重要）
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+credentials.json
+application_default_credentials.json
+.gcloud/
+.config/gcloud/
+
+# 環境変数
+.env
+.env.*
+!.env.example
 
 # Docker 関連
-.DS_Store (Macの場合)
+.DS_Store
+Thumbs.db
+*~
 
-# 秘密情報（もし将来使う場合）
+# IDE/エディタ
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+
+# 秘密情報
 *.pem
 *.key
+*.p12
+*.pfx
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+.venv

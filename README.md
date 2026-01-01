@@ -1,29 +1,279 @@
-# GCP Free Tier x Terraform x Docker Deployment Lab
+# GCP Free Tier × Terraform × Docker デプロイメントプロジェクト
 
-## 概要
-GCP（Google Cloud Platform）の無料枠（Free Tier）を最大限活用し、Terraformを用いてインフラをコード化（IaC）、Dockerコンテナをデプロイする一連のパイプラインを構築したプロジェクトです。
+[![CI/CD Pipeline](https://github.com/YOUR_USERNAME/gcp-deploy-lab/actions/workflows/deploy.yml/badge.svg)](https://github.com/YOUR_USERNAME/gcp-deploy-lab/actions/workflows/deploy.yml)
 
-## 特徴
-- **完全無料枠**: `e2-micro` インスタンスと `us-central1` リージョンを選定。
-- **IaC (Infrastructure as Code)**: Terraformにより、VPC/Subnet/Firewall/VMを一括構築。
-- **Immutable Infrastructure**: Container-Optimized OS (COS) を採用し、コンテナを自動実行。
+## 📋 概要
 
-## 構成図
-[Local Machine (WSL2)] --(push)--> [Docker Hub]
-      |                                  |
-[Terraform (IaC)] --(deploy)--> [Google Cloud (GCE)] --(pull)--> [App Container]
+GCP（Google Cloud Platform）の無料枠（Free Tier）を最大限活用し、Infrastructure as Code (Terraform) とコンテナ技術 (Docker) を用いて、本番レベルのデプロイメントパイプラインを構築したプロジェクトです。
 
-## 使用技術
-- **Language**: Python (Flask)
-- **Container**: Docker
-- **IaC**: Terraform
-- **Cloud**: Google Cloud (Compute Engine, VPC)
+## ✨ 特徴
 
-## 使い方
-1. `docker build` & `push` でイメージをDocker Hubへ。
-2. `gcloud auth application-default login` で認証。
-3. `terraform init` / `plan` / `apply` でデプロイ。
+- **💰 完全無料枠**: `e2-micro` インスタンスと `us-central1` リージョンを選定
+- **🏗️ IaC (Infrastructure as Code)**: Terraform により VPC/Subnet/Firewall/VM を一括構築
+- **🐳 Immutable Infrastructure**: Container-Optimized OS (COS) を採用し、コンテナを自動実行
+- **🔒 セキュリティ**: 非特権ユーザー、非ルートコンテナ、環境変数管理
+- **🔄 冪等性**: Terraform による宣言的な状態管理
+- **🚀 CI/CD**: GitHub Actions による自動ビルド・デプロイ
 
-## 工夫した点
-- 32GBメモリのローカル環境を活かした高速なビルドサイクルの実現。
-- メタデータ（gce-container-declaration）を活用した、VM起動時のコンテナ自動デプロイ設定。
+## 🏗️ アーキテクチャ
+
+```
+┌─────────────────┐      ┌──────────────┐      ┌─────────────────┐
+│  Local Machine  │──▶───│ Docker Hub   │──▶───│  GCP (GCE)      │
+│  (開発環境)      │ push │  (Registry)  │ pull │  e2-micro + COS │
+└─────────────────┘      └──────────────┘      └─────────────────┘
+        │                                                │
+        │                                                │
+        └────────────▶ GitHub Actions ────────────▶─────┘
+                       (CI/CD Pipeline)
+```
+
+### リソース構成
+- **VPC**: カスタムネットワーク
+- **Subnet**: 10.0.1.0/24
+- **Firewall**: HTTP (80), SSH (オプション)
+- **Compute Engine**: e2-micro + COS + 30GB Standard disk
+
+## 🛠️ 使用技術
+
+| カテゴリ | 技術 |
+|---------|------|
+| **Language** | Python 3.11 |
+| **Framework** | Flask 3.0.0 |
+| **Container** | Docker (Multi-stage build) |
+| **IaC** | Terraform >= 1.0 |
+| **Cloud** | Google Cloud Platform |
+| **CI/CD** | GitHub Actions |
+
+## 🚀 セットアップ手順
+
+### 前提条件
+
+- GCP アカウント (無料枠有効)
+- Docker Hub アカウント
+- GitHub リポジトリ
+- ローカルに以下がインストール済み:
+  - Docker
+  - Terraform >= 1.0
+  - Google Cloud SDK
+
+### 1. リポジトリをクローン
+
+```bash
+git clone https://github.com/YOUR_USERNAME/gcp-deploy-lab.git
+cd gcp-deploy-lab
+```
+
+### 2. GCP サービスアカウントの作成
+
+```bash
+# プロジェクトIDを設定
+export PROJECT_ID="your-gcp-project-id"
+
+# サービスアカウント作成
+gcloud iam service-accounts create terraform-sa \
+  --display-name="Terraform Service Account"
+
+# 必要な権限を付与
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:terraform-sa@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/compute.admin"
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:terraform-sa@${PROJECT_ID}.iam.gserviceaccount.com" \
+  --role="roles/iam.serviceAccountUser"
+
+# キーをダウンロード
+gcloud iam service-accounts keys create ~/gcp-key.json \
+  --iam-account=terraform-sa@${PROJECT_ID}.iam.gserviceaccount.com
+```
+
+### 3. GitHub Secrets の設定
+
+GitHub リポジトリの Settings > Secrets and variables > Actions で以下を設定:
+
+| Secret 名 | 説明 |
+|-----------|------|
+| `GCP_PROJECT_ID` | GCP プロジェクト ID |
+| `GCP_SA_KEY` | サービスアカウントキー (JSON 全体) |
+| `DOCKER_HUB_USERNAME` | Docker Hub ユーザー名 |
+| `DOCKER_HUB_TOKEN` | Docker Hub アクセストークン |
+
+### 4. ローカルデプロイ (任意)
+
+```bash
+# Docker イメージをビルド
+docker build -t gcp-free-app:latest .
+
+# ローカルで実行
+docker run -p 8080:8080 gcp-free-app:latest
+
+# ブラウザで確認
+open http://localhost:8080
+```
+
+### 5. Terraform でインフラをデプロイ
+
+```bash
+cd terraform
+
+# 変数ファイルを作成
+cp terraform.tfvars.example terraform.tfvars
+# terraform.tfvars を編集して必要な値を設定
+
+# GCP 認証
+gcloud auth application-default login
+
+# Terraform 実行
+terraform init
+terraform plan
+terraform apply
+```
+
+### 6. GitHub Actions で自動デプロイ
+
+```bash
+git add .
+git commit -m "Initial commit"
+git push origin main
+```
+
+mainブランチへのプッシュで自動的に以下が実行されます:
+1. Dockerイメージのビルド & プッシュ
+2. Terraformによるインフラ構築
+3. アプリケーションのデプロイ
+
+## 📁 ディレクトリ構造
+
+```
+.
+├── .github/
+│   └── workflows/
+│       └── deploy.yml          # CI/CDパイプライン定義
+├── app/
+│   ├── main.py                 # Flaskアプリケーション
+│   └── requirements.txt        # Python依存関係
+├── terraform/
+│   ├── main.tf                 # Terraformメイン設定
+│   ├── variables.tf            # 変数定義
+│   └── terraform.tfvars.example # 変数テンプレート
+├── Dockerfile                  # マルチステージビルド設定
+├── .gitignore                  # Git除外設定
+└── README.md                   # このファイル
+```
+
+## 🔐 セキュリティのベストプラクティス
+
+### 実装済み
+
+- ✅ 非rootユーザーでコンテナを実行
+- ✅ 非特権ポート (8080) を使用
+- ✅ 秘密情報を `.gitignore` で除外
+- ✅ Docker マルチステージビルド
+- ✅ ヘルスチェックの実装
+- ✅ 最小限の権限を持つサービスアカウント
+- ✅ ファイアウォールによるアクセス制御
+
+### 推奨される追加対策
+
+- 🔲 Terraform state を GCS バックエンドに保存
+- 🔲 本番環境では SSH アクセスを制限
+- 🔲 Cloud Logging/Monitoring の有効化
+- 🔲 Secrets Manager の活用
+
+## 🔄 冪等性の保証
+
+### Terraform
+- **宣言的な状態管理**: 同じ構成を何度実行しても同じ結果
+- **State ファイル**: リソースの現在の状態を追跡
+- **環境変数による分離**: dev/staging/prod 環境を分離可能
+
+### Docker
+- **イミュータブルなイメージ**: タグ付けによるバージョン管理
+- **レイヤーキャッシュ**: ビルドの高速化
+
+### GitHub Actions
+- **条件付き実行**: main ブランチのみデプロイ
+- **ジョブ分離**: ビルドとデプロイを分離
+
+## 🧪 テスト
+
+```bash
+# アプリケーションのヘルスチェック
+curl http://<EXTERNAL_IP>/health
+
+# レスポンス例
+{
+  "status": "healthy",
+  "environment": "prod",
+  "port": 8080
+}
+```
+
+## 💰 コスト管理
+
+### 無料枠の内訳
+- **Compute Engine**: e2-micro 1台/月 (us-central1)
+- **永続ディスク**: 30GB Standard
+- **ネットワーク**: 1GB/月の外部通信
+
+### コスト最適化のポイント
+1. リージョンは必ず `us-central1`, `us-east1`, `us-west1` のいずれかを使用
+2. マシンタイプは `e2-micro` を維持
+3. 不要な時はインスタンスを停止: `gcloud compute instances stop <INSTANCE_NAME>`
+
+## 🐛 トラブルシューティング
+
+### Terraform エラー
+
+```bash
+# State をリフレッシュ
+terraform refresh
+
+# 強制的に再作成
+terraform taint google_compute_instance.app_server
+terraform apply
+```
+
+### コンテナが起動しない
+
+```bash
+# GCE にSSH接続
+gcloud compute ssh <INSTANCE_NAME> --zone=us-central1-a
+
+# コンテナログを確認
+sudo docker logs <CONTAINER_ID>
+```
+
+### GitHub Actions が失敗する
+
+1. Secrets が正しく設定されているか確認
+2. GCP サービスアカウントの権限を確認
+3. Terraform の状態ファイルが競合していないか確認
+
+## 📚 参考資料
+
+- [GCP Always Free](https://cloud.google.com/free/docs/gcp-free-tier)
+- [Terraform GCP Provider](https://registry.terraform.io/providers/hashicorp/google/latest/docs)
+- [Container-Optimized OS](https://cloud.google.com/container-optimized-os/docs)
+- [Docker Best Practices](https://docs.docker.com/develop/dev-best-practices/)
+
+## 🤝 コントリビューション
+
+1. Fork this repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📝 ライセンス
+
+MIT License
+
+## 👤 作成者
+
+[@YOUR_USERNAME](https://github.com/YOUR_USERNAME)
+
+---
+
+**⚠️ 注意**: このプロジェクトは学習・実験目的です。本番環境で使用する場合は、セキュリティとコストを十分に検討してください。
