@@ -6,10 +6,10 @@ terraform {
       version = "~> 5.0"
     }
   }
-  
+
   # GCS バックエンドでstate管理（ローカルとCI/CDで共有）
   backend "gcs" {
-    bucket = "terraform-state-gcp-free-tier"  # 事前に作成が必要
+    bucket = "terraform-state-gcp-free-tier" # 事前に作成が必要
     prefix = "terraform/state"
   }
 }
@@ -37,12 +37,12 @@ resource "google_compute_subnetwork" "subnet" {
 resource "google_compute_firewall" "http" {
   name    = "${var.environment}-allow-http"
   network = google_compute_network.vpc.name
-  
+
   allow {
     protocol = "tcp"
     ports    = ["8080"]
   }
-  
+
   source_ranges = ["0.0.0.0/0"]
   target_tags   = ["http-server"]
 }
@@ -51,12 +51,12 @@ resource "google_compute_firewall" "http" {
 resource "google_compute_firewall" "ssh" {
   name    = "${var.environment}-allow-ssh"
   network = google_compute_network.vpc.name
-  
+
   allow {
     protocol = "tcp"
     ports    = ["22"]
   }
-  
+
   source_ranges = var.ssh_source_ranges
   target_tags   = ["ssh-server"]
 }
@@ -93,13 +93,13 @@ resource "google_compute_instance" "app_server" {
                 value: '8080'
         restartPolicy: Always
     EOT
-    
+
     google-logging-enabled = "true"
   }
 
   network_interface {
     subnetwork = google_compute_subnetwork.subnet.id
-    
+
     access_config {
       # 外部IPを自動割り当て
     }
