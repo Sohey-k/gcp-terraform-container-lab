@@ -88,7 +88,32 @@ gcloud iam service-accounts keys create ~/gcp-key.json \
   --iam-account=terraform-sa@${PROJECT_ID}.iam.gserviceaccount.com
 ```
 
-### 3. Terraform 変数ファイルの設定
+### 3. GCS バケットの作成（Terraform state 用）
+
+TerraformのstateをGCSで管理し、ローカルとCI/CDで共有します。
+
+```bash
+# GCSバケットを作成（ユニークな名前が必要）
+export BUCKET_NAME="terraform-state-${PROJECT_ID}"
+
+gsutil mb -p ${PROJECT_ID} -c STANDARD -l us-central1 gs://${BUCKET_NAME}
+
+# バージョニングを有効化（推奨）
+gsutil versioning set on gs://${BUCKET_NAME}
+```
+
+> **無料枠**: GCSは毎月5GBまで無料。terraform.tfstateは数百KBなので実質タダです。
+
+**main.tf の backend 設定を更新:**
+
+```hcl
+backend "gcs" {
+  bucket = "terraform-state-your-project-id"  # 作成したバケット名に変更
+  prefix = "terraform/state"
+}
+```
+
+### 4. Terraform 変数ファイルの設定
 
 Terraform で使用する変数を設定します。
 
@@ -128,7 +153,7 @@ environment = "dev"
 
 > **注意**: `terraform.tfvars` は `.gitignore` に含まれているため、Git にコミットされません。
 
-### 4. GitHub Secrets の設定
+### 5. GitHub Secrets の設定
 
 GitHub リポジトリの Settings > Secrets and variables > Actions で以下を設定:
 
@@ -139,7 +164,7 @@ GitHub リポジトリの Settings > Secrets and variables > Actions で以下�
 | `DOCKER_HUB_USERNAME` | Docker Hub ユーザー名 |
 | `DOCKER_HUB_TOKEN` | Docker Hub アクセストークン |
 
-### 5. ローカルデプロイ (任意)
+### 6. ローカルデプロイ (任意)
 
 ```bash
 # Docker イメージをビルド
@@ -152,21 +177,31 @@ docker run -p 8080:8080 gcp-free-app:latest
 open http://localhost:8080
 ```
 
-### 6. Terraform でインフラをデプロイ
+### 7. Terraform でインフラをデプロイ
 
 ```bash
 cd terraform
 
-# GCP 認証
+# GCP 認証（初回のみ）
 gcloud auth application-default login
 
-# Terraform 実行
+# Terraform 実行（GCS backendを使用）
 terraform init
 terraform plan
 terraform apply
+
+# 不要になったら削除
+terraform destroy
 ```
 
-### 7. GitHub Actions で自動デプロイ
+> **重要**: apply/destroy は**ローカルで手動実行**を推奨します。事故や課金を防ぐため、CI/CDでは plan までの実行にしています。
+
+**認証について:**
+- 一度 `gcloud auth application-default login` を実行すれば、認証情報は `~/.config/gcloud/application_default_credentials.json` に保存されます
+- 次回以降のterraform実行では再ログイン不要です
+- 認証エラーが出た場合のみ、再度ログインしてください（トークン有効期限: 約1時間）
+
+### 8. GitHub Actions で自動チェック
 
 ```bash
 git add .
@@ -174,10 +209,11 @@ git commit -m "Initial commit"
 git push origin main
 ```
 
-mainブランチへのプッシュで自動的に以下が実行されます:
+mainブランチへのプッシュで自動的に以下が実行されます：
 1. Dockerイメージのビルド & プッシュ
-2. Terraformによるインフラ構築
-3. アプリケーションのデプロイ
+2. Terraformの検証（init, validate, plan）
+
+> **注意**: `terraform apply` はCIで実行されません。インフラのデプロイ/削除はローカルで手動実行してください。
 
 ## 📁 ディレクトリ構造
 
