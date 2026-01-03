@@ -9,12 +9,12 @@ PORT = int(os.environ.get('PORT', 8080))
 
 @app.route('/')
 def hello():
-    return """
+    return f"""
     <html>
     <head>
         <title>GCP Deployment Success</title>
         <style>
-            body {
+            body {{
                 font-family: Arial, sans-serif;
                 display: flex;
                 justify-content: center;
@@ -22,17 +22,17 @@ def hello():
                 height: 100vh;
                 margin: 0;
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            }
-            .container {
+            }}
+            .container {{
                 text-align: center;
                 background: white;
                 padding: 40px;
                 border-radius: 10px;
                 box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            }
-            h1 { color: #667eea; margin-bottom: 20px; }
-            .status { color: #28a745; font-weight: bold; }
-            .info { color: #6c757d; margin-top: 10px; }
+            }}
+            h1 {{ color: #667eea; margin-bottom: 20px; }}
+            .status {{ color: #28a745; font-weight: bold; }}
+            .info {{ color: #6c757d; margin-top: 10px; }}
         </style>
     </head>
     <body>
@@ -40,14 +40,14 @@ def hello():
             <h1>🎉 GCP Free Tier x Terraform x Docker</h1>
             <p class="status">✅ デプロイ成功！</p>
             <div class="info">
-                <p>Environment: <strong>{env}</strong></p>
+                <p>Environment: <strong>{ENVIRONMENT}</strong></p>
                 <p>Machine Type: <strong>e2-micro</strong></p>
-                <p>Port: <strong>{port}</strong></p>
+                <p>Port: <strong>{PORT}</strong></p>
             </div>
         </div>
     </body>
     </html>
-    """.format(env=ENVIRONMENT, port=PORT)
+    """
 
 @app.route('/health')
 def health():
