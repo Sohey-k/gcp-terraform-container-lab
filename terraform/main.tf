@@ -33,14 +33,14 @@ resource "google_compute_subnetwork" "subnet" {
   network       = google_compute_network.vpc.id
 }
 
-# ファイアウォール（HTTP 80番ポートを開放）
+# ファイアウォール（HTTP 8080番ポートを開放）
 resource "google_compute_firewall" "http" {
   name    = "${var.environment}-allow-http"
   network = google_compute_network.vpc.name
   
   allow {
     protocol = "tcp"
-    ports    = ["80"]
+    ports    = ["8080"]
   }
   
   source_ranges = ["0.0.0.0/0"]
@@ -85,7 +85,7 @@ resource "google_compute_instance" "app_server" {
             image: '${var.docker_image}'
             ports:
               - containerPort: 8080
-                hostPort: 80
+                hostPort: 8080
             env:
               - name: ENVIRONMENT
                 value: '${var.environment}'
@@ -123,7 +123,7 @@ resource "google_compute_instance" "app_server" {
 # 最後にアクセスURLを表示させる
 output "web_url" {
   description = "Application URL"
-  value       = "http://${google_compute_instance.app_server.network_interface[0].access_config[0].nat_ip}"
+  value       = "http://${google_compute_instance.app_server.network_interface[0].access_config[0].nat_ip}:8080"
 }
 
 output "instance_name" {

@@ -88,7 +88,47 @@ gcloud iam service-accounts keys create ~/gcp-key.json \
   --iam-account=terraform-sa@${PROJECT_ID}.iam.gserviceaccount.com
 ```
 
-### 3. GitHub Secrets の設定
+### 3. Terraform 変数ファイルの設定
+
+Terraform で使用する変数を設定します。
+
+```bash
+cd terraform
+
+# テンプレートをコピー
+cp terraform.tfvars.example terraform.tfvars
+
+# terraform.tfvars を編集
+```
+
+**必須パラメーター:**
+
+| パラメーター | 説明 | 例 |
+|------------|------|-----|
+| `project_id` | GCP プロジェクト ID | `"your-gcp-project-id"` |
+| `docker_image` | Docker Hub イメージパス | `"docker.io/your-username/gcp-free-app:latest"` |
+
+**オプションパラメーター:**
+
+| パラメーター | デフォルト値 | 説明 |
+|------------|------------|------|
+| `environment` | `"dev"` | 環境名 (dev/staging/prod) |
+| `region` | `"us-central1"` | GCP リージョン |
+| `zone` | `"us-central1-a"` | GCP ゾーン |
+| `machine_type` | `"e2-micro"` | マシンタイプ |
+| `ssh_source_ranges` | `[]` | SSH接続を許可するIP範囲 |
+
+**設定例:**
+
+```hcl
+project_id = "my-gcp-project-12345"
+docker_image = "docker.io/myusername/gcp-free-app:latest"
+environment = "dev"
+```
+
+> **注意**: `terraform.tfvars` は `.gitignore` に含まれているため、Git にコミットされません。
+
+### 4. GitHub Secrets の設定
 
 GitHub リポジトリの Settings > Secrets and variables > Actions で以下を設定:
 
@@ -99,7 +139,7 @@ GitHub リポジトリの Settings > Secrets and variables > Actions で以下�
 | `DOCKER_HUB_USERNAME` | Docker Hub ユーザー名 |
 | `DOCKER_HUB_TOKEN` | Docker Hub アクセストークン |
 
-### 4. ローカルデプロイ (任意)
+### 5. ローカルデプロイ (任意)
 
 ```bash
 # Docker イメージをビルド
@@ -112,14 +152,10 @@ docker run -p 8080:8080 gcp-free-app:latest
 open http://localhost:8080
 ```
 
-### 5. Terraform でインフラをデプロイ
+### 6. Terraform でインフラをデプロイ
 
 ```bash
 cd terraform
-
-# 変数ファイルを作成
-cp terraform.tfvars.example terraform.tfvars
-# terraform.tfvars を編集して必要な値を設定
 
 # GCP 認証
 gcloud auth application-default login
@@ -130,7 +166,7 @@ terraform plan
 terraform apply
 ```
 
-### 6. GitHub Actions で自動デプロイ
+### 7. GitHub Actions で自動デプロイ
 
 ```bash
 git add .
