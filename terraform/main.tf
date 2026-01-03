@@ -7,11 +7,11 @@ terraform {
     }
   }
   
-  # 本番環境ではGCS バックエンドの使用を推奨
-  # backend "gcs" {
-  #   bucket = "your-terraform-state-bucket"
-  #   prefix = "terraform/state"
-  # }
+  # GCS バックエンドでstate管理（ローカルとCI/CDで共有）
+  backend "gcs" {
+    bucket = "terraform-state-gcp-free-tier"  # 事前に作成が必要
+    prefix = "terraform/state"
+  }
 }
 
 provider "google" {
