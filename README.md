@@ -208,6 +208,12 @@ terraform apply
 
 # 不要になったら削除
 terraform destroy
+
+# GCS バケット（terraform state用）も削除する場合
+# ⚠️ 注意: state ファイルが削除されるため、Terraform管理外のリソースになります
+export BUCKET_NAME="terraform-state-${PROJECT_ID}"
+gsutil rm -r gs://${BUCKET_NAME}  # バケット内のファイルを全削除
+gsutil rb gs://${BUCKET_NAME}      # バケット自体を削除
 ```
 
 > **重要**: apply/destroy は**ローカルで手動実行**を推奨します。事故や課金を防ぐため、CI/CDでは plan までの実行にしています。
@@ -339,7 +345,96 @@ sudo docker logs <CONTAINER_ID>
 2. GCP サービスアカウントの権限を確認
 3. Terraform の状態ファイルが競合していないか確認
 
-## 📚 参考資料
+## � 便利なコマンド集
+
+### 環境変数の確認・設定
+
+```bash
+# 現在のGCPプロジェクトを確認
+gcloud config get-value project
+
+# 環境変数を確認
+echo "PROJECT_ID: ${PROJECT_ID}"
+echo "BUCKET_NAME: ${BUCKET_NAME}"
+
+# 環境変数を設定
+export PROJECT_ID="your-gcp-project-id"
+export BUCKET_NAME="terraform-state-${PROJECT_ID}"
+
+# 環境変数を永続化（~/.bashrc or ~/.zshrc に追記）
+echo 'export PROJECT_ID="your-gcp-project-id"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+### GCS バケットの確認
+
+```bash
+# すべてのGCSバケットを一覧表示
+gsutil ls
+
+# 特定のバケットの内容を確認
+gsutil ls gs://${BUCKET_NAME}
+
+# バケット内を再帰的に確認
+gsutil ls -r gs://${BUCKET_NAME}
+
+# バケットの詳細情報を確認
+gsutil ls -L -b gs://${BUCKET_NAME}
+
+# バケットのバージョニング状態を確認
+gsutil versioning get gs://${BUCKET_NAME}
+```
+
+### Compute Engine の確認
+
+```bash
+# 実行中のインスタンス一覧
+gcloud compute instances list
+
+# 特定のインスタンスの詳細
+gcloud compute instances describe <INSTANCE_NAME> --zone=us-central1-a
+
+# インスタンスの外部IPを取得
+gcloud compute instances describe <INSTANCE_NAME> --zone=us-central1-a \
+  --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
+
+# インスタンスを停止（課金を抑える）
+gcloud compute instances stop <INSTANCE_NAME> --zone=us-central1-a
+
+# インスタンスを起動
+gcloud compute instances start <INSTANCE_NAME> --zone=us-central1-a
+```
+
+### Terraform 状態の確認
+
+```bash
+# 現在の状態を確認
+terraform show
+
+# リソース一覧
+terraform state list
+
+# 特定のリソースの詳細
+terraform state show <RESOURCE_NAME>
+
+# stateファイルの場所を確認
+terraform state pull
+```
+
+### Docker イメージの確認
+
+```bash
+# ローカルのDockerイメージ一覧
+docker images
+
+# Docker Hub上のイメージを確認（要ログイン）
+docker search your-username
+
+# イメージのタグ一覧（Docker Hub Web UIで確認推奨）
+# https://hub.docker.com/r/your-username/gcp-free-app/tags
+```
+
+## �📚 参考資料
 
 - [GCP Always Free](https://cloud.google.com/free/docs/gcp-free-tier)
 - [Terraform GCP Provider](https://registry.terraform.io/providers/hashicorp/google/latest/docs)
