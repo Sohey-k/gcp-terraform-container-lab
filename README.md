@@ -344,7 +344,7 @@ MIT License
 
 ## 👤 作成者
 
-[@YOUR_USERNAME](https://github.com/YOUR_USERNAME)
+[Sohey-K](https://github.com/Sohey-k)
 
 ---
 
