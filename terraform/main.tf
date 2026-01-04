@@ -7,11 +7,7 @@ terraform {
     }
   }
 
-  # GCS バックエンドでstate管理（ローカルとCI/CDで共有）
-  backend "gcs" {
-    bucket = "terraform-state-gcp-free-tier" # 事前に作成が必要
-    prefix = "terraform/state"
-  }
+  # backend設定はbackend.tfに記載（.gitignoreで除外）
 }
 
 provider "google" {

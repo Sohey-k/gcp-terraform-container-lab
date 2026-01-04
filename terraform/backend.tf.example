@@ -1,0 +1,17 @@
+# GCS バックエンドでstate管理（ローカルとCI/CDで共有）
+# 使い方:
+#   1. このファイルを backend.tf にコピー
+#      cp backend.tf.example backend.tf
+#   2. your-project-id を実際のGCPプロジェクトIDに変更
+#   3. バケットを作成（初回のみ）
+#      export PROJECT_ID="your-project-id"
+#      export BUCKET_NAME="terraform-state-${PROJECT_ID}"
+#      gsutil mb -p ${PROJECT_ID} -c STANDARD -l us-central1 gs://${BUCKET_NAME}
+#      gsutil versioning set on gs://${BUCKET_NAME}
+
+terraform {
+  backend "gcs" {
+    bucket = "terraform-state-your-project-id" # 作成したバケット名に変更
+    prefix = "terraform/state"
+  }
+}

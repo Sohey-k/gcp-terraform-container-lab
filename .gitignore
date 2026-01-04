@@ -11,6 +11,7 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+backend.tf
 
 # GCP 認証情報（最重要）
 *.json

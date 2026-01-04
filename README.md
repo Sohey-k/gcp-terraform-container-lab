@@ -104,14 +104,30 @@ gsutil versioning set on gs://${BUCKET_NAME}
 
 > **無料枠**: GCSは毎月5GBまで無料。terraform.tfstateは数百KBなので実質タダです。
 
-**main.tf の backend 設定を更新:**
+**backend.tf の作成:**
+
+```bash
+cd terraform
+
+# テンプレートファイルをコピー
+cp backend.tf.example backend.tf
+
+# backend.tf を編集（your-project-id を実際のプロジェクトIDに変更）
+```
+
+**backend.tf の内容:**
 
 ```hcl
-backend "gcs" {
-  bucket = "terraform-state-your-project-id"  # 作成したバケット名に変更
-  prefix = "terraform/state"
+terraform {
+  backend "gcs" {
+    bucket = "terraform-state-your-project-id"  # 作成したバケット名に変更
+    prefix = "terraform/state"
+  }
 }
 ```
+
+> ⚠️ **重要**: `backend.tf` は個人のプロジェクト情報が含まれるため、`.gitignore` に追加されています。
+> リポジトリには `backend.tf.example` がテンプレートとして提供されています。
 
 ### 4. Terraform 変数ファイルの設定
 
